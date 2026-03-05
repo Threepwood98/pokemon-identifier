@@ -12,14 +12,14 @@ Lógica de decisión:
   [ViT classifier]
     │
     ├── score >= 80% ──→  VIT_DIRECT (~100ms)
-    │                     Respuesta directa, sin llamar a GPT-4o
+    │                     Respuesta directa, sin llamar a Gemini
     │
-    └── score <  80% ──→  [GPT-4o Vision] (~2–4s)
+    └── score <  80% ──→  [Gemini Flash] (~2–4s)
                           Entiende fotos reales, figuras, cartas,
                           fanart y cualquier imagen del mundo real
                           │
-                          ├── GPT-4o responde → GPT4O_VISION
-                          └── GPT-4o falla    → VIT_FALLBACK (usa ViT de todos modos)
+                          ├── Gemini responde → GEMINI_VISION
+                          └── Gemini falla    → VIT_FALLBACK (usa ViT de todos modos)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
 
@@ -63,7 +63,7 @@ router = APIRouter(prefix="/api", tags=["Pokemon Identification"])
     },
     summary="Identificar Pokémon a partir de una imagen",
     description="""
-Recibe una imagen y devuelve el Pokémon mediante un **sistema híbrido ViT + GPT-4o Vision**.
+Recibe una imagen y devuelve el Pokémon mediante un **sistema híbrido ViT + Gemini 2.0 Flash**.
 
 **Flujo:**
 - ViT supera **80%** → respuesta directa (~100ms)
@@ -92,11 +92,11 @@ async def identify_pokemon(
     vit_name, vit_confidence, vit_is_reliable = await classify_with_vit(image_bytes)
     logger.info(
         f"      ViT → '{vit_name}' {vit_confidence:.1f}% "
-        f"({'confiable ✓' if vit_is_reliable else 'baja confianza — activando GPT-4o ⚡'})"
+        f"({'confiable ✓' if vit_is_reliable else 'baja confianza — activando Gemini ⚡'})"
     )
 
     # ─────────────────────────────────────────────────────────────────
-    # PASO 3: Decisión ViT vs GPT-4o
+    # PASO 3: Decisión ViT vs Gemini
     # ─────────────────────────────────────────────────────────────────
     final_name: str | None = None
     final_confidence: float = 0.0
@@ -111,11 +111,11 @@ async def identify_pokemon(
         final_confidence = vit_confidence
         final_method = DetectionMethod.VIT_DIRECT
 
-    # ── Rama B: ViT inseguro → GPT-4o Vision ────────────────────────
+    # ── Rama B: ViT inseguro → Gemini Flash ────────────────────────
     else:
         logger.info(f"[3/4] ⚡ Activando Gemini Flash (ViT: {vit_confidence:.1f}%)...")
 
-        # Pasamos el hint del ViT a GPT-4o para mejorar precisión
+        # Pasamos el hint del ViT a Gemini para mejorar precisión
         gpt_name, gpt_confidence = await classify_with_gemini(
             image_bytes,
             vit_hint=vit_name,

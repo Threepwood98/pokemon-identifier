@@ -1,12 +1,12 @@
 """
 app/services/gemini_classifier.py
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Identificador de Pokémon usando Google Gemini 1.5 Flash como fallback.
+Identificador de Pokémon usando Google Gemini 2.0 Flash como fallback.
 
 Ventajas:
  • 100% gratuito hasta 1,500 requests/día (más que suficiente)
  • Entiende fotos reales, figuras, cartas, fanart, capturas de pantalla
- • ~1–2s de latencia (más rápido que GPT-4o)
+ • ~1–2s de latencia
  • Respuesta directa con el nombre del Pokémon en formato PokéAPI
 
 Límites del tier gratuito:
@@ -16,7 +16,6 @@ Límites del tier gratuito:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
 
-import asyncio
 import json
 import logging
 import re
@@ -30,8 +29,8 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+# Modelo configurado una sola vez al importar el módulo
 _model = None
-_semaphore = asyncio.Semaphore(15)
 
 
 def _get_model():
@@ -42,7 +41,7 @@ def _get_model():
             raise ValueError("GEMINI_API_KEY no está configurada.")
         genai.configure(api_key=settings.GEMINI_API_KEY)
         _model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
+            model_name="gemini-2.0-flash",
             generation_config=genai.GenerationConfig(
                 temperature=0,  # determinístico
                 max_output_tokens=150,  # la respuesta JSON es corta
@@ -89,8 +88,10 @@ async def classify_with_gemini(
     try:
         model = _get_model()
 
+        # Convertir bytes a imagen PIL (Gemini acepta objetos PIL directamente)
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
 
+        # Añadir hint del ViT al prompt si está disponible
         hint_text = ""
         if vit_hint:
             hint_text = (
@@ -102,15 +103,13 @@ async def classify_with_gemini(
 
         logger.info("Enviando imagen a Gemini 1.5 Flash...")
 
-        async with _semaphore:
-            response = await asyncio.wait_for(
-                model.generate_content_async([prompt, image]),
-                timeout=30.0,
-            )
+        # Gemini acepta la imagen directamente como objeto PIL
+        response = await model.generate_content_async([prompt, image])
 
         raw = response.text or ""
         logger.info(f"Gemini respuesta raw: {raw[:200]}")
 
+        # Limpiar posibles ```json ... ``` wrappers
         clean = re.sub(r"```(?:json)?|```", "", raw).strip()
         data = json.loads(clean)
 
@@ -127,11 +126,7 @@ async def classify_with_gemini(
 
         return name, confidence
 
-    except asyncio.TimeoutError:
-        logger.warning("Gemini: timeout de 30s excedido.")
-        return None, 0.0
     except json.JSONDecodeError as e:
-        raw = getattr(response, 'text', '') if 'response' in dir() else ""
         logger.warning(f"Gemini respuesta no es JSON válido: {e}. Raw: {raw[:300]}")
         return None, 0.0
     except Exception as e:
