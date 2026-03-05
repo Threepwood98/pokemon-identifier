@@ -1,6 +1,6 @@
 # 🎮 Pokemon Identifier API
 
-API RESTful que identifica un Pokémon a partir de una imagen usando un sistema híbrido de dos etapas: un modelo **ViT local** (Vision Transformer) como clasificador principal y **Gemini 2.0 Flash** de Google como fallback inteligente para imágenes del mundo real.
+API RESTful que identifica un Pokémon a partir de una imagen usando un sistema híbrido de dos etapas: un modelo **ViT local** (Vision Transformer) como clasificador principal y **Gemini 2.5 Flash** de Google como fallback inteligente para imágenes del mundo real.
 
 ---
 
@@ -177,7 +177,7 @@ El campo `detection_method` indica qué motor identificó el Pokémon:
 | Valor           | Significado                                              |
 | --------------- | -------------------------------------------------------- |
 | `vit_direct`    | ViT con ≥ 80% de confianza — respuesta directa (~0.2s)   |
-| `gemini_vision` | Gemini 2.0 Flash — ViT con baja confianza (~1–2s)        |
+| `gemini_vision` | Gemini 2.5 Flash — ViT con baja confianza (~1–2s)        |
 | `vit_fallback`  | Gemini falló — se usó el ViT como último recurso (~0.2s) |
 
 **Response 404** (no identificado):
@@ -308,7 +308,7 @@ Para el tier de Railway Hobby, el coste de RAM del modelo cargado ~6h/día es de
 | `uvicorn`             | Servidor ASGI de alto rendimiento      |
 | `transformers`        | Pipeline del modelo ViT (Hugging Face) |
 | `torch`               | Backend de inferencia del ViT          |
-| `google-generativeai` | Cliente de Gemini 2.0 Flash            |
+| `google-generativeai` | Cliente de Gemini 2.5 Flash            |
 | `httpx`               | Cliente HTTP asíncrono para PokéAPI    |
 | `Pillow`              | Validación de integridad de imágenes   |
 | `thefuzz`             | Fuzzy matching para nombres de Pokémon |

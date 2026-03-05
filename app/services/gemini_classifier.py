@@ -1,7 +1,7 @@
 """
 app/services/gemini_classifier.py
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Identificador de Pokémon usando Google Gemini 2.0 Flash como fallback.
+Identificador de Pokémon usando Google Gemini 2.5 Flash como fallback.
 
 Ventajas:
  • 100% gratuito hasta 1,500 requests/día (más que suficiente)
@@ -41,7 +41,7 @@ def _get_model():
             raise ValueError("GEMINI_API_KEY no está configurada.")
         genai.configure(api_key=settings.GEMINI_API_KEY)
         _model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash",
+            model_name="gemini-2.5-flash",
             generation_config=genai.GenerationConfig(
                 temperature=0,  # determinístico
                 max_output_tokens=150,  # la respuesta JSON es corta

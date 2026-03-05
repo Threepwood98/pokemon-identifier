@@ -63,7 +63,7 @@ router = APIRouter(prefix="/api", tags=["Pokemon Identification"])
     },
     summary="Identificar Pokémon a partir de una imagen",
     description="""
-Recibe una imagen y devuelve el Pokémon mediante un **sistema híbrido ViT + Gemini 2.0 Flash**.
+Recibe una imagen y devuelve el Pokémon mediante un **sistema híbrido ViT + Gemini 2.5 Flash**.
 
 **Flujo:**
 - ViT supera **80%** → respuesta directa (~100ms)
