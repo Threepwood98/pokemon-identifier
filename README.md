@@ -7,41 +7,28 @@ API RESTful que identifica un Pokémon a partir de una imagen usando un sistema 
 ## ⚙️ Cómo funciona
 
 ```
-Imagen recibida
-      │
-      ▼
-┌─────────────────────────────────────┐
-│  🤖  Modelo ViT                     │  ~100–150ms · local en Railway
-│  1027 Pokémon Gen 1–9               │  Lazy loading + auto-descarga
-└──────────────┬──────────────────────┘
-               │
-        score ≥ 80%? ──── SÍ ──→  ✅ VIT_DIRECT  (~0.2s)
-               │                      Respuesta directa
-               NO
-               │
-               ▼
-┌─────────────────────────────────────┐
-│  ✨  Gemini 1.5 Flash               │  ~1–2s · Google AI Studio
-│  Entiende fotos reales, figuras,    │  Gratis hasta 1,500 req/día
-│  cartas, fanart y capturas          │
-└──────────────┬──────────────────────┘
-               │
-       Gemini responde? ─ SÍ ──→  🌐 GEMINI_VISION  (~1–2s)
-               │
-               NO (error)
-               │
-               ▼
-          ⚠️  VIT_FALLBACK  (~0.2s)
-          Resultado del ViT como último recurso
-               │
-               ▼
-┌─────────────────────────────────────┐
-│  🗄️  PokéAPI                        │  300–500ms · cache TTL 24h
-│  id, tipos, stats, sprite oficial   │
-└─────────────────────────────────────┘
-               │
-               ▼
-         JSON Response
+              [ Cliente / App Web ]
+                        │
+                        ▼
+            [ API Gateway (FastAPI) ]
+                        │
+                        ▼
+              [ Modelo ViT (Local) ] ◄─────┐
+                        │                  │
+                ¿Confianza >= 80%?         │
+                 /              \          │
+              (SÍ)              (NO)       │
+               │                 │         │
+               ▼                 ▼         │
+        [ VIT_DIRECT ]    [ Gemini Flash ] │
+               │                 │         │
+               │          ¿Gemini falló? ──┘
+               │                 │
+               ▼                 ▼
+            [ Enriquecimiento PokéAPI ]
+                        │
+                        ▼
+                [ Respuesta JSON ]
 ```
 
 ---
