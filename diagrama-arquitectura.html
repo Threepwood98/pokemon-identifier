@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pokemon Identifier API — Arquitectura</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #0d1117;
+        color: #e6edf3;
+        min-height: 100vh;
+        padding: 24px;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 22px;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 4px;
+      }
+      .subtitle {
+        text-align: center;
+        font-size: 13px;
+        color: #7d8590;
+        margin-bottom: 28px;
+      }
+
+      .diagram {
+        max-width: 900px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .row {
+        display: flex;
+        align-items: stretch;
+      }
+
+      .box {
+        border-radius: 10px;
+        padding: 14px 18px;
+        position: relative;
+        cursor: default;
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s;
+        flex: 1;
+      }
+      .box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      }
+      .box .label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+        opacity: 0.7;
+      }
+      .box .title {
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      .box .desc {
+        font-size: 12px;
+        opacity: 0.75;
+        line-height: 1.5;
+      }
+      .box .tag {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: 20px;
+        margin-top: 6px;
+      }
+
+      .blue {
+        background: #1565c0;
+        border: 1px solid #1976d2;
+      }
+      .green {
+        background: #1b5e20;
+        border: 1px solid #2e7d32;
+      }
+      .purple {
+        background: #4a148c;
+        border: 1px solid #6a1b9a;
+      }
+      .google {
+        background: #1565c0;
+        border: 1px solid #1976d2;
+        background: linear-gradient(135deg, #1a3a6e, #1a5276);
+        border: 1px solid #2471a3;
+      }
+      .teal {
+        background: #006064;
+        border: 1px solid #00838f;
+      }
+      .dark {
+        background: #161b22;
+        border: 1px solid #30363d;
+      }
+      .dark2 {
+        background: #1c2128;
+        border: 1px solid #30363d;
+      }
+      .amber {
+        background: #4a3000;
+        border: 1px solid #7d5a00;
+      }
+
+      /* Arrows */
+      .arrow-down {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 36px;
+        position: relative;
+        flex-shrink: 0;
+      }
+      .arrow-down::after {
+        content: "";
+        position: absolute;
+        width: 2px;
+        height: 100%;
+        background: #30363d;
+      }
+      .arrow-down .arrow-head {
+        position: absolute;
+        bottom: 0;
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 8px solid #30363d;
+        z-index: 1;
+      }
+      .arrow-label {
+        position: absolute;
+        font-size: 10px;
+        color: #7d8590;
+        background: #0d1117;
+        padding: 0 4px;
+        white-space: nowrap;
+        left: calc(50% + 10px);
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      /* Diamond */
+      .decision-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 8px 0;
+      }
+      .diamond {
+        width: 160px;
+        height: 160px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .diamond::before {
+        content: "";
+        position: absolute;
+        width: 110px;
+        height: 110px;
+        background: #161b22;
+        border: 2px solid #388bfd;
+        transform: rotate(45deg);
+        border-radius: 4px;
+      }
+      .diamond-text {
+        position: relative;
+        text-align: center;
+        z-index: 1;
+        font-size: 12px;
+        font-weight: 700;
+        color: #388bfd;
+        line-height: 1.3;
+        max-width: 80px;
+      }
+
+      /* 2 branches */
+      .branches-2 {
+        display: flex;
+        gap: 16px;
+        position: relative;
+      }
+      .branches-2::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: calc(25% + 8px);
+        right: calc(25% + 8px);
+        height: 2px;
+        background: #30363d;
+      }
+
+      .branch {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .branch-label {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 3px 12px;
+        border-radius: 20px;
+        margin-bottom: 6px;
+        text-align: center;
+      }
+      .branch-down {
+        height: 24px;
+        display: flex;
+        justify-content: center;
+        position: relative;
+        width: 100%;
+      }
+      .branch-down::after {
+        content: "";
+        position: absolute;
+        width: 2px;
+        height: 100%;
+        background: #30363d;
+      }
+      .branch-box {
+        width: 100%;
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-size: 12px;
+        text-align: center;
+        transition: transform 0.15s;
+        cursor: default;
+      }
+      .branch-box:hover {
+        transform: translateY(-2px);
+      }
+
+      /* Gemini detail sub-box */
+      .sub-box {
+        width: 100%;
+        border-radius: 8px;
+        padding: 9px 12px;
+        font-size: 11px;
+        margin-top: 8px;
+      }
+
+      /* Fallback */
+      .fallback-pill {
+        width: 100%;
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 11px;
+        margin-top: 6px;
+        background: #1c1a00;
+        border: 1px dashed #7d5a00;
+        color: #c8a800;
+        text-align: center;
+      }
+
+      /* 2-branch merge */
+      .merge-2 {
+        height: 40px;
+        position: relative;
+      }
+      .merge-2::before {
+        content: "";
+        position: absolute;
+        left: calc(25% + 8px);
+        right: calc(25% + 8px);
+        bottom: 0;
+        height: 2px;
+        background: #30363d;
+      }
+      .merge-2-left {
+        position: absolute;
+        bottom: 0;
+        top: 0;
+        width: 2px;
+        background: #30363d;
+        left: calc(25% + 8px);
+      }
+      .merge-2-right {
+        position: absolute;
+        bottom: 0;
+        top: 0;
+        width: 2px;
+        background: #30363d;
+        right: calc(25% + 8px);
+      }
+      .merge-2-center {
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 8px solid #30363d;
+      }
+
+      /* Time cards */
+      .times {
+        display: flex;
+        gap: 12px;
+        margin-top: 28px;
+      }
+      .time-card {
+        flex: 1;
+        border-radius: 8px;
+        padding: 12px 14px;
+        border: 1px solid #30363d;
+        background: #161b22;
+        text-align: center;
+      }
+      .time-card .method {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .time-card .speed {
+        font-size: 22px;
+        font-weight: 900;
+        margin: 4px 0;
+      }
+      .time-card .info {
+        font-size: 11px;
+        color: #7d8590;
+      }
+
+      /* Legend */
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 20px;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: #7d8590;
+      }
+      .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      /* Railway wrapper */
+      .railway-wrapper {
+        border: 2px dashed #30363d;
+        border-radius: 14px;
+        padding: 16px;
+        margin-top: 20px;
+        position: relative;
+      }
+      .railway-label {
+        position: absolute;
+        top: -11px;
+        left: 16px;
+        background: #0d1117;
+        padding: 0 8px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #7d8590;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* Tooltip */
+      [data-tip] {
+        position: relative;
+      }
+      [data-tip]:hover::after {
+        content: attr(data-tip);
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: #161b22;
+        border: 1px solid #30363d;
+        color: #e6edf3;
+        font-size: 11px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+        z-index: 10;
+        pointer-events: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      }
+
+      .ext-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 20px;
+        background: #0d1117;
+        border: 1px solid #30363d;
+        color: #7d8590;
+        margin-top: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🎮 Pokemon Identifier API</h1>
+    <p class="subtitle">
+      Arquitectura del sistema híbrido · ViT Model + Gemini 1.5 Flash + PokéAPI
+      · Desplegado en Railway
+    </p>
+
+    <div class="diagram">
+      <div class="railway-wrapper">
+        <div class="railway-label">
+          🚂 Railway · Docker Container · Python 3.11
+        </div>
+
+        <!-- CLIENT -->
+        <div class="row">
+          <div
+            class="box blue"
+            data-tip="POST /api/identify-pokemon · multipart/form-data · campo: file"
+          >
+            <div class="label">Cliente</div>
+            <div class="title">🌐 Frontend / App Web</div>
+            <div class="desc">
+              Sube una imagen del Pokémon como multipart/form-data al endpoint
+              POST /api/identify-pokemon
+            </div>
+            <span class="tag" style="background: #1976d2; color: #fff"
+              >HTTP Request</span
+            >
+          </div>
+        </div>
+
+        <div class="arrow-down">
+          <div class="arrow-head"></div>
+          <span class="arrow-label">imagen recibida</span>
+        </div>
+
+        <!-- FASTAPI -->
+        <div class="row">
+          <div class="box dark" data-tip="FastAPI · Python 3.11 · Uvicorn ASGI">
+            <div class="label">API Gateway</div>
+            <div class="title">⚡ FastAPI + Uvicorn</div>
+            <div class="desc">
+              Recibe la imagen · Valida formato (JPEG/PNG/WEBP/GIF) · Verifica
+              tamaño ≤ 5MB · Valida integridad con Pillow
+            </div>
+            <span class="tag" style="background: #30363d; color: #7d8590"
+              >CORS · GZip · Error handling</span
+            >
+          </div>
+        </div>
+
+        <div class="arrow-down">
+          <div class="arrow-head"></div>
+          <span class="arrow-label">imagen válida (bytes)</span>
+        </div>
+
+        <!-- VIT -->
+        <div class="row">
+          <div
+            class="box purple"
+            data-tip="imzynoxprince/pokemons-image-classifier-gen1-gen9 · ~350MB · CPU · Lazy loading + idle unload 5min"
+          >
+            <div class="label">Paso 1 · Clasificación Visual</div>
+            <div class="title">🤖 Modelo ViT (Vision Transformer)</div>
+            <div class="desc">
+              Analiza los píxeles directamente · 1027 Pokémon Gen 1–9 ·
+              ThreadPoolExecutor (no bloquea el event loop) · Lazy loading +
+              auto-descarga tras 5 min de inactividad
+            </div>
+            <span class="tag" style="background: #6a1b9a; color: #e1bee7"
+              >~100–150ms en CPU</span
+            >
+            <span
+              class="tag"
+              style="background: #4a148c; color: #ce93d8; margin-left: 4px"
+              >Hugging Face ViT</span
+            >
+          </div>
+        </div>
+
+        <div class="arrow-down">
+          <div class="arrow-head"></div>
+          <span class="arrow-label">score de confianza (0–100%)</span>
+        </div>
+
+        <!-- DIAMOND -->
+        <div class="decision-wrapper">
+          <div class="diamond">
+            <div class="diamond-text">ViT score<br />≥ 80%?</div>
+          </div>
+        </div>
+
+        <!-- BRANCHES -->
+        <div class="branches-2">
+          <!-- Rama A -->
+          <div class="branch">
+            <div
+              class="branch-label"
+              style="background: #1b5e20; color: #a5d6a7"
+            >
+              ✅ SÍ — score ≥ 80%
+            </div>
+            <div class="branch-down"></div>
+            <div
+              class="branch-box green"
+              data-tip="Tiempo total: ~200–400ms · Gemini no se invoca"
+            >
+              <div
+                style="font-weight: 700; font-size: 13px; margin-bottom: 4px"
+              >
+                VIT_DIRECT
+              </div>
+              <div style="opacity: 0.85; font-size: 12px">
+                Respuesta directa
+              </div>
+              <div style="opacity: 0.65; font-size: 11px; margin-top: 6px">
+                Alta confianza — Gemini no se invoca. Respuesta inmediata.
+              </div>
+            </div>
+          </div>
+
+          <!-- Rama B -->
+          <div class="branch">
+            <div
+              class="branch-label"
+              style="background: #1a3a5c; color: #90caf9"
+            >
+              ⚡ NO — score &lt; 80%
+            </div>
+            <div class="branch-down"></div>
+            <div
+              class="branch-box google"
+              data-tip="Gemini 1.5 Flash · Gratis 1,500 req/día · ~1–2s · Google AI Studio"
+            >
+              <div
+                style="font-weight: 700; font-size: 13px; margin-bottom: 4px"
+              >
+                GEMINI_VISION
+              </div>
+              <div style="opacity: 0.85; font-size: 12px">Gemini 1.5 Flash</div>
+              <div style="opacity: 0.65; font-size: 11px; margin-top: 6px">
+                ViT inseguro — Gemini analiza la imagen visualmente. Entiende
+                fotos reales, figuras, cartas y fanart.
+              </div>
+              <div class="ext-badge">
+                🌐 Google AI Studio · Gratis 1,500 req/día
+              </div>
+            </div>
+
+            <!-- Gemini detail -->
+            <div
+              class="sub-box"
+              style="background: #0d1f2d; border: 1px dashed #2471a3"
+            >
+              <div
+                style="
+                  font-size: 11px;
+                  color: #90caf9;
+                  font-weight: 700;
+                  margin-bottom: 3px;
+                "
+              >
+                Entrada a Gemini:
+              </div>
+              <div style="font-size: 11px; color: #7d8590; font-style: italic">
+                "Identify the Pokémon… [imagen base64]"
+              </div>
+              <div style="font-size: 11px; color: #7d8590; margin-top: 4px">
+                ← JSON:
+                <span style="color: #a5d6a7"
+                  >{ pokemon_name, confidence, reasoning }</span
+                >
+              </div>
+              <div style="font-size: 10px; color: #484f58; margin-top: 4px">
+                + hint del ViT si tiene algo de score
+              </div>
+            </div>
+
+            <!-- VIT_FALLBACK -->
+            <div class="fallback-pill">
+              ⚠ Si Gemini falla → <strong>VIT_FALLBACK</strong><br />
+              <span style="font-size: 10px; opacity: 0.75"
+                >Resultado del ViT como último recurso</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- MERGE -->
+        <div class="merge-2" style="margin-top: 8px">
+          <div class="merge-2-left"></div>
+          <div class="merge-2-right"></div>
+          <div class="merge-2-center"></div>
+        </div>
+
+        <div class="arrow-down" style="height: 24px">
+          <div class="arrow-head"></div>
+          <span class="arrow-label">nombre del Pokémon identificado</span>
+        </div>
+
+        <!-- POKEAPI -->
+        <div class="row">
+          <div
+            class="box teal"
+            data-tip="pokeapi.co/api/v2/pokemon/{name} · Catálogo ~1350 Pokémon cacheado 24h en memoria"
+          >
+            <div class="label">Paso Final · Enriquecimiento</div>
+            <div class="title">🗄️ PokéAPI</div>
+            <div class="desc">
+              Obtiene datos del Pokémon identificado: id, altura, peso, tipos,
+              stats base, sprite oficial · Catálogo completo cacheado en memoria
+              24h
+            </div>
+            <span class="tag" style="background: #00838f; color: #e0f7fa"
+              >300–500ms</span
+            >
+            <span
+              class="tag"
+              style="background: #006064; color: #b2ebf2; margin-left: 4px"
+              >Cache TTL 24h</span
+            >
+            <div class="ext-badge">🌐 pokeapi.co · Gratuito</div>
+          </div>
+        </div>
+
+        <div class="arrow-down">
+          <div class="arrow-head"></div>
+          <span class="arrow-label">JSON response</span>
+        </div>
+
+        <!-- RESPONSE -->
+        <div class="row">
+          <div
+            class="box dark2"
+            style="
+              font-family: &quot;Consolas&quot;, monospace;
+              font-size: 12px;
+              line-height: 1.9;
+            "
+          >
+            <div
+              class="label"
+              style="font-family: &quot;Segoe UI&quot;, sans-serif"
+            >
+              Respuesta JSON
+            </div>
+            <span style="color: #7d8590">{</span><br />
+            &nbsp;&nbsp;<span style="color: #79c0ff">"pokemon_name"</span
+            ><span style="color: #7d8590">:</span>
+            <span style="color: #a5d6a7">"charizard"</span
+            ><span style="color: #7d8590">,</span><br />
+            &nbsp;&nbsp;<span style="color: #79c0ff">"confidence"</span
+            ><span style="color: #7d8590">:</span>
+            <span style="color: #f78166">97.4</span
+            ><span style="color: #7d8590">,</span><br />
+            &nbsp;&nbsp;<span style="color: #79c0ff">"detection_method"</span
+            ><span style="color: #7d8590">:</span>
+            <span style="color: #a5d6a7">"vit_direct"</span>
+            <span style="color: #484f58"
+              >// vit_direct | gemini_vision | vit_fallback</span
+            ><span style="color: #7d8590">,</span><br />
+            &nbsp;&nbsp;<span style="color: #79c0ff">"details"</span
+            ><span style="color: #7d8590">:</span>
+            <span style="color: #7d8590"
+              >{ id, tipos, stats, sprite_url... }</span
+            ><br />
+            <span style="color: #7d8590">}</span>
+          </div>
+        </div>
+      </div>
+      <!-- /railway-wrapper -->
+
+      <!-- TIME CARDS -->
+      <div class="times">
+        <div
+          class="time-card"
+          data-tip="Sprites oficiales, artwork limpio — caso más frecuente"
+        >
+          <div class="method" style="color: #a5d6a7">VIT_DIRECT</div>
+          <div class="speed" style="color: #00ff88">~0.2s</div>
+          <div class="info">score ≥ 80% · sin Gemini</div>
+        </div>
+        <div
+          class="time-card"
+          data-tip="Fotos reales, figuras, fanart, cartas — Gemini analiza la imagen"
+        >
+          <div class="method" style="color: #90caf9">GEMINI_VISION</div>
+          <div class="speed" style="color: #42a5f5">~1–2s</div>
+          <div class="info">score &lt; 80% · Gemini Flash</div>
+        </div>
+        <div
+          class="time-card"
+          data-tip="Gemini no disponible o falla · ViT responde de todas formas"
+        >
+          <div class="method" style="color: #ffcc80">VIT_FALLBACK</div>
+          <div class="speed" style="color: #ff9800">~0.2s</div>
+          <div class="info">Gemini falló · ViT como respaldo</div>
+        </div>
+      </div>
+
+      <!-- LEGEND -->
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background: #1565c0"></div>
+          Frontend
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: #4a148c"></div>
+          Modelo ViT (local en Railway)
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: #1a5276"></div>
+          Gemini Flash (Google AI · externo)
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: #006064"></div>
+          PokéAPI (externo · gratuito)
+        </div>
+        <div class="legend-item">
+          <div
+            class="legend-dot"
+            style="background: #161b22; border: 1px solid #30363d"
+          ></div>
+          FastAPI container
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
