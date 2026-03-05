@@ -7,19 +7,6 @@ import httpx
 from app.core.config import settings
 from app.models.schemas import PokemonDetails, PokemonType, PokemonStats
 
-_client: httpx.AsyncClient | None = None
-
-
-async def get_client() -> httpx.AsyncClient:
-    """Retorna cliente HTTP con connection pooling (singleton)."""
-    global _client
-    if _client is None:
-        _client = httpx.AsyncClient(
-            timeout=settings.POKEAPI_TIMEOUT,
-            limits=httpx.Limits(max_keepalive_connections=10, max_connections=20),
-        )
-    return _client
-
 
 async def fetch_pokemon_details(pokemon_name: str) -> PokemonDetails | None:
     """
@@ -31,8 +18,8 @@ async def fetch_pokemon_details(pokemon_name: str) -> PokemonDetails | None:
     url = f"{settings.POKEAPI_BASE_URL}/pokemon/{pokemon_name.lower()}"
 
     try:
-        client = await get_client()
-        response = await client.get(url)
+        async with httpx.AsyncClient(timeout=settings.POKEAPI_TIMEOUT) as client:
+            response = await client.get(url)
             if response.status_code == 404:
                 return None
             response.raise_for_status()
@@ -52,7 +39,8 @@ async def fetch_pokemon_details(pokemon_name: str) -> PokemonDetails | None:
 
     # Extraer stats por nombre
     stats_map: dict[str, int] = {
-        s["stat"]["name"]: s["base_stat"] for s in data.get("stats", [])
+        s["stat"]["name"]: s["base_stat"]
+        for s in data.get("stats", [])
     }
 
     stats = PokemonStats(
@@ -64,15 +52,16 @@ async def fetch_pokemon_details(pokemon_name: str) -> PokemonDetails | None:
 
     # Sprite oficial
     sprites = data.get("sprites", {})
-    sprite_url = sprites.get("other", {}).get("official-artwork", {}).get(
-        "front_default"
-    ) or sprites.get("front_default")
+    sprite_url = (
+        sprites.get("other", {}).get("official-artwork", {}).get("front_default")
+        or sprites.get("front_default")
+    )
 
     return PokemonDetails(
         id=data["id"],
         name=data["name"],
-        height=data["height"] / 10,  # PokéAPI usa decímetros → metros
-        weight=data["weight"] / 10,  # PokéAPI usa hectogramos → kilogramos
+        height=data["height"] / 10,   # PokéAPI usa decímetros → metros
+        weight=data["weight"] / 10,   # PokéAPI usa hectogramos → kilogramos
         types=types,
         stats=stats,
         sprite_url=sprite_url,
