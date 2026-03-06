@@ -112,7 +112,7 @@ async def classify_with_gemini(
         # Estrategia de extracción robusta:
         # 1. Buscar el primer { ... } aunque venga envuelto en ```json
         # 2. Si no hay objeto JSON, intentar limpiar fences y parsear
-        json_match = re.search(r"\{.*?\}", raw, re.DOTALL)
+        json_match = re.search(r"\{.*\}", raw, re.DOTALL)
         if json_match:
             clean = json_match.group()
         else:
