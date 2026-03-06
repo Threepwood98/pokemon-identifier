@@ -42,8 +42,16 @@ def _get_model():
             generation_config=genai.GenerationConfig(
                 temperature=0,
                 max_output_tokens=512,
-                # JSON mode nativo — el SDK garantiza JSON valido sin wrappers
                 response_mime_type="application/json",
+                response_schema={
+                    "type": "object",
+                    "properties": {
+                        "pokemon_name": {"type": "string"},
+                        "confidence": {"type": "integer"},
+                        "reasoning": {"type": "string"}
+                    },
+                    "required": ["pokemon_name", "confidence"]
+                },
             ),
         )
     return _model
@@ -139,6 +147,10 @@ async def classify_with_gemini(
 
         except Exception as e:
             error_msg = str(e)
+            if "quota" in error_msg.lower() or "429" in error_msg:
+                logger.error(f"Rate limit hit - stopping retries: {error_msg[:100]}")
+                return None, 0.0
+            
             if "safety_ratings" in error_msg or "Invalid operation" in error_msg:
                 logger.warning(f"Gemini safety/rating block at attempt {attempt + 1}: {error_msg}")
                 if attempt < len(retry_delays):
