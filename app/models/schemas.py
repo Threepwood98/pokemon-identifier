@@ -20,7 +20,7 @@ class PokemonStats(BaseModel):
 
 
 class PokemonDetails(BaseModel):
-    """Datos básicos obtenidos de PokéAPI."""
+    """Datos obtenidos de PokeAPI."""
 
     id: int
     name: str
@@ -32,44 +32,35 @@ class PokemonDetails(BaseModel):
     pokeapi_url: str
 
 
-class DetectionMethod(str):
-    VIT_DIRECT = "vit_direct"  # ViT >= 80% — respuesta directa sin GPT-4o
-    GPT4O_VISION = "gpt4o_vision"  # GPT-4o Vision — ViT < 80%, GPT-4o identificó
-    VIT_FALLBACK = (
-        "vit_fallback"  # GPT-4o falló, se usó resultado ViT como último recurso
-    )
-    # Legacy (mantenidos por compatibilidad con clientes existentes)
-    VIT_CONFIRMED = "vit_confirmed"
-    SERPAPI_FALLBACK = "serpapi_fallback"
-    SERPAPI_ONLY = "serpapi_only"
+class DetectionMethod:
+    """Metodos de deteccion disponibles."""
+
+    GEMINI_VISION = "gemini_vision"  # Gemini 2.5 Flash (motor principal)
+    VIT_DIRECT = "vit_direct"  # Legacy
+    VIT_FALLBACK = "vit_fallback"  # Legacy
+    VIT_CONFIRMED = "vit_confirmed"  # Legacy
+    GPT4O_VISION = "gpt4o_vision"  # Legacy
 
 
 class IdentificationResult(BaseModel):
-    """Respuesta exitosa del endpoint de identificación."""
+    """Respuesta exitosa del endpoint de identificacion."""
 
     success: bool = True
-    pokemon_name: str = Field(..., description="Nombre del Pokémon identificado")
+    pokemon_name: str = Field(..., description="Nombre del Pokemon identificado")
     confidence: float = Field(
-        ...,
-        ge=0.0,
-        le=100.0,
-        description="Porcentaje de confianza basado en la frecuencia de aparición en resultados",
+        ..., ge=0.0, le=100.0, description="Porcentaje de confianza (0-100)"
     )
-    detection_method: str = Field(
-        ...,
-        description="Método usado: vit_direct | vit_confirmed | serpapi_fallback | serpapi_only",
-    )
+    detection_method: str = Field(..., description="Motor usado: gemini_vision")
     matched_keywords: list[str] = Field(
-        default=[],
-        description="Palabras clave que llevaron a la identificación (solo en métodos SerpAPI)",
+        default=[], description="Palabras clave (no usado)"
     )
     details: Optional[PokemonDetails] = Field(
-        None, description="Datos del Pokémon de PokéAPI (si está disponible)"
+        None, description="Datos del Pokemon de PokeAPI"
     )
 
 
 class ErrorResponse(BaseModel):
-    """Respuesta de error estándar."""
+    """Respuesta de error estandar."""
 
     success: bool = False
     error: str
