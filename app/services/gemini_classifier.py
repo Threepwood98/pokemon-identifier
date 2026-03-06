@@ -101,16 +101,29 @@ async def classify_with_gemini(
 
         prompt = PROMPT_TEMPLATE.format(hint=hint_text)
 
-        logger.info("Enviando imagen a Gemini 1.5 Flash...")
+        logger.info("Enviando imagen a Gemini 2.5 Flash...")
 
         # Gemini acepta la imagen directamente como objeto PIL
         response = await model.generate_content_async([prompt, image])
 
         raw = response.text or ""
-        logger.info(f"Gemini respuesta raw: {raw[:200]}")
+        logger.info(f"Gemini respuesta raw: {raw[:300]}")
 
-        # Limpiar posibles ```json ... ``` wrappers
-        clean = re.sub(r"```(?:json)?|```", "", raw).strip()
+        # Estrategia de extracción robusta:
+        # 1. Buscar el primer { ... } aunque venga envuelto en ```json
+        # 2. Si no hay objeto JSON, intentar limpiar fences y parsear
+        json_match = re.search(r"\{.*?\}", raw, re.DOTALL)
+        if json_match:
+            clean = json_match.group()
+        else:
+            clean = re.sub(r"```(?:json)?\s*|```", "", raw).strip()
+
+        if not clean:
+            logger.warning(
+                f"Gemini devolvió respuesta vacía o sin JSON. Raw: {raw[:300]}"
+            )
+            return None, 0.0
+
         data = json.loads(clean)
 
         pokemon_name = data.get("pokemon_name")
